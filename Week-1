@@ -1,0 +1,174 @@
+#include <stdio.h>
+#include <string.h>
+
+struct process {
+    int pid;
+    char pname[50];
+    int priority;
+    int burst_time;
+};
+
+void display(struct process p[], int n) {
+    int i;
+    printf("\nPID\tName\tPriority\tBurstTime\n");
+    for (i = 0; i < n; i++) {
+        printf("%d\t%s\t%d\t\t%d\n",
+               p[i].pid, p[i].pname,
+               p[i].priority, p[i].burst_time);
+    }
+}
+
+void bubbleSortPriority(struct process p[], int n, int *comp, int *swaps) {
+    int i, j;
+    struct process temp;
+    for (i = 0; i < n - 1; i++) {
+        for (j = 0; j < n - 1 - i; j++) {
+            (*comp)++;
+            if (p[j].priority > p[j + 1].priority) {
+                temp = p[j];
+                p[j] = p[j + 1];
+                p[j + 1] = temp;
+                (*swaps)++;
+            }
+        }
+    }
+}
+
+void insertionSortPID(struct process p[], int n, int *comp, int *moves) {
+    int i, j;
+    struct process key;
+    for (i = 1; i < n; i++) {
+        key = p[i];
+        j = i - 1;
+        while (j >= 0 && p[j].pid > key.pid) {
+            (*comp)++;
+            p[j + 1] = p[j];
+            j--;
+            (*moves)++;
+        }
+        p[j + 1] = key;
+    }
+}
+
+void shellSortBurst(struct process p[], int n, int *comp, int *moves) {
+    int gap, i, j;
+    struct process temp;
+    for (gap = n / 2; gap > 0; gap /= 2) {
+        for (i = gap; i < n; i++) {
+            temp = p[i];
+            j = i;
+            while (j >= gap && p[j - gap].burst_time > temp.burst_time) {
+                (*comp)++;
+                p[j] = p[j - gap];
+                j -= gap;
+                (*moves)++;
+            }
+            p[j] = temp;
+        }
+    }
+}
+
+int linearSearch(struct process p[], int n, int key, int *comp) {
+    int i;
+    for (i = 0; i < n; i++) {
+        (*comp)++;
+        if (p[i].pid == key)
+            return i;
+    }
+    return -1;
+}
+int binarySearch(struct process p[], int n, int key, int *comp) {
+    int low = 0, high = n - 1, mid;
+    while (low <= high) {
+        mid = (low + high) / 2;
+        (*comp)++;
+        if (p[mid].pid == key)
+            return mid;
+        else if (p[mid].pid < key)
+            low = mid + 1;
+        else
+            high = mid - 1;
+    }
+    return -1;
+}
+
+int main() {
+    int n, i;
+    struct process p[50];
+    int sortChoice, searchChoice;
+    int sortComp = 0, sortOps = 0;
+    int searchComp = 0;
+    int pidSorted = 0;
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    for (i = 0; i < n; i++) {
+        printf("\nEnter PID, Name, Priority, Burst Time: ");
+        scanf("%d %s %d %d",
+              &p[i].pid,
+              p[i].pname,
+              &p[i].priority,
+              &p[i].burst_time);
+    }
+
+    printf("\nSorting Menu");
+    printf("\n1. Bubble Sort (Priority)");
+    printf("\n2. Insertion Sort (PID)");
+    printf("\n3. Shell Sort (Burst Time)\n");
+    scanf("%d", &sortChoice);
+
+    switch (sortChoice) {
+    case 1:
+        bubbleSortPriority(p, n, &sortComp, &sortOps);
+        break;
+    case 2:
+        insertionSortPID(p, n, &sortComp, &sortOps);
+        pidSorted = 1;
+        break;
+    case 3:
+        shellSortBurst(p, n, &sortComp, &sortOps);
+        break;
+    default:
+        printf("Invalid sorting choice\n");
+        return 0;
+    }
+
+    display(p, n);
+    printf("\nSorting Comparisons = %d", sortComp);
+    printf("\nSorting Operations  = %d\n", sortOps);
+
+    printf("\nSearch Menu");
+    printf("\n1. Linear Search");
+    printf("\n2. Binary Search\n");
+    scanf("%d", &searchChoice);
+
+    int key, pos;
+    printf("Enter PID to search: ");
+    scanf("%d", &key);
+
+    if (searchChoice == 1) {
+        pos = linearSearch(p, n, key, &searchComp);
+    } else if (searchChoice == 2) {
+        if (!pidSorted) {
+            printf("\nBinary search requires PID sorted data.\n");
+            return 0;
+        }
+        pos = binarySearch(p, n, key, &searchComp);
+    } else {
+        printf("Invalid search choice\n");
+        return 0;
+    }
+
+    if (pos != -1) {
+        printf("\nProcess Found:");
+        printf("\nPID=%d Name=%s Priority=%d Burst=%d",
+               p[pos].pid, p[pos].pname,
+               p[pos].priority, p[pos].burst_time);
+        printf("\nSearch Comparisons=%d\n", searchComp);
+    } else {
+        printf("\nProcess not found\n");
+    }
+
+    return 0;
+}
